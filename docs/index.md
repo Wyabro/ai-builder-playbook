@@ -1148,3 +1148,7 @@ AI is a powerful collaborator, but it is not the owner of the project. It will n
 AI also does not naturally protect your scope. If you keep asking for more, it will keep adding more. That does not mean the project is getting better. Sometimes the most professional move is to stop adding, test what exists, and ship the smallest coherent version.
 
 The point of using AI is not to remove the human from the process. The point is to spend less time fighting boilerplate, searching docs, writing repetitive code, summarizing feedback, and drafting first passes so you can spend more time making judgment calls. Define the target, constrain the agent, verify reality, cut what does not matter, and keep going until there is something real for people to use or play.
+
+## License
+
+This guide is licensed under the Creative Commons Attribution 4.0 International License. You may share and adapt it with attribution.

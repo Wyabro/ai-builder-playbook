@@ -2,16 +2,14 @@
 
 This repo was prepared from version 3 of the AI game and app development guide.
 
-Recommended GitHub setup:
+GitHub setup:
 
-- Repository name: `ai-game-app-development-guide`
+- Repository name: `ai-builder-playbook`
 - Description: `A practical guide to making games and apps with AI`
-- Visibility: private while drafting, public when ready to share
-- License: choose intentionally before public release
+- Visibility: public
+- License: Creative Commons Attribution 4.0 International
 
 Optional next steps:
 
 - Enable GitHub Pages from the `docs/` folder.
-- Add a license once the intended sharing model is clear.
 - Add issues for future sections or improvements.
-
