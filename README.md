@@ -1,4 +1,4 @@
-# The Practical Guide to Making Games and Apps with AI
+# A Practical Guide to Making Games and Apps with AI
 
 AI can help you build games and apps faster than ever, but it does not magically turn a vague idea into a finished product. The builders who get the most out of AI do not simply keep asking for more code. They give the AI a clear target, work in small slices, verify the result in the real product, and cut scope before the project becomes impossible to finish.
 
