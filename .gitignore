@@ -1,0 +1,18 @@
+.DS_Store
+Thumbs.db
+
+# Editor folders
+.vscode/
+.idea/
+
+# Build/output folders
+dist/
+build/
+site/
+.cache/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
