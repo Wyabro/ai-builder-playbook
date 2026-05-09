@@ -1,6 +1,6 @@
-# The Practical Guide to Making Games and Apps with AI
+# The Practical Guide to Making Games and Apps with AI (v4)
 
-The current version is v4. A dedicated v4 page is available at [v4/](v4/) for direct linking and bookmarking. The full guide is reproduced on this page below.
+This is the dedicated v4 page of the guide. The same content also appears on the [main page](../). The repository [README](https://github.com/Wyabro/ai-builder-playbook) tracks the latest revision.
 
 AI can help you build games and apps faster than ever, but it does not magically turn a vague idea into a finished product. The builders who get the most out of AI do not simply keep asking for more code. They give the AI a clear target, work in small slices, verify the result in the real product, and cut scope before the project becomes impossible to finish.
 
