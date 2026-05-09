@@ -2,7 +2,11 @@
 
 AI can help you build games and apps faster than ever, but it does not magically turn a vague idea into a finished product. The builders who get the most out of AI do not simply keep asking for more code. They give the AI a clear target, work in small slices, verify the result in the real product, and cut scope before the project becomes impossible to finish.
 
+The way builders use AI has shifted. A few years ago, AI mostly meant autocomplete inside an editor and chat snippets pasted in by hand. Today, AI shows up as agents that read repos, run terminals, drive editors, control browsers, and even reach into game engines through tool protocols. That shift is what most of v4 is about: the practices that worked for autocomplete still help, but a project that only treats AI as autocomplete is leaving most of the value on the table.
+
 This guide is written for people who want to actually build something. It covers games and apps, because the modern AI workflow overlaps heavily across both: planning, choosing tools, writing project rules, using coding agents, generating assets, testing, deploying, handling legal risk, and shipping updates. The guide starts with the beginner-friendly workflow, then gets more specific about engines, app builders, local models, multiplayer, AI safety, publishing, and prompt templates.
+
+A practical idea worth keeping in mind from the start: good project documentation is for humans first, but it is also for the agents that read your repo. The clearer you make the project context, the rules, the examples, and the things to avoid, the better both groups will work. You do not need to write for AI specifically. You need to write clearly, in the repo, where any reader can find it.
 
 ## The whole workflow in one page
 
@@ -38,19 +42,52 @@ Start by naming the kind of project. This matters because a good AI workflow for
 | A mobile app | Expo React Native, Flutter, Swift, or Kotlin | Expo is often AI-friendly because TypeScript is widely understood and EAS Submit can upload production iOS and Android builds after store prerequisites are met ([Expo](https://docs.expo.dev/deploy/submit-to-app-stores/)). | Mobile adds signing, device QA, privacy labels, app review, payments, and screenshots. |
 | An AI-native app or game | Usually web first, then native if needed | AI-native products need logging, cost controls, moderation, rate limits, prompt safety, and fallback behavior before polish. OWASP has separate guidance for LLM applications and agentic applications ([OWASP LLM Top 10](https://genai.owasp.org/llm-top-10/?cat=44), [OWASP Agentic Applications Top 10](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/)). | Live AI is a safety, cost, and compliance feature, not just a cool mechanic. |
 
+### A quick frame for app and engine choices
+
+The table above answers "what kind of project is this?" The table below is a sketch of where each common framework or platform tends to fit. Think of it as a starting opinion, not a ranking.
+
+| Stack | Strongest fit | Notes |
+| --- | --- | --- |
+| Lovable / Bolt / v0 / Replit Agent | Generating a UI, landing page, or prototype from a prompt. | Connect to Git early; plan how production work moves into a normal repo. |
+| Next.js | Web apps, dashboards, SaaS, content sites. | Mature ecosystem; easy to host with previews and rollbacks. |
+| Expo React Native | Cross-platform mobile apps using TypeScript. | EAS submit for stores; native modules can still complicate things. |
+| Flutter | Cross-platform UIs with custom rendering. | Strong for highly designed mobile and desktop UIs; Dart is less common in AI training data than TypeScript. |
+| Unity | 2D and 3D games, mobile games, cross-platform commercial projects. | Big asset and tutorial ecosystem; strong AI tooling around C#. |
+| Godot | Solo and small-team 2D games, lightweight 3D. | Lighter and more transparent project layout; growing AI tool support. |
+| Unreal / UEFN | High-fidelity 3D, cinematic projects, Fortnite Creative content. | Heavier engine; UEFN trades freedom for built-in distribution. |
+
+Use this to short-circuit an unproductive debate. If the project clearly fits one row, pick it and start. If it could fit two rows, pick the simpler one and revisit only if you hit a real wall.
+
 ### What the common tools actually are
 
 Many guides name tools without explaining what role they play. Here is the practical map.
 
-- **Cursor**: An AI code editor. Good for repo-based development, multi-file edits, asking questions about code, and using rules files. Cursor’s agent guidance emphasizes plans, rules, diffs, reviews, and scoped conversations ([Cursor](https://cursor.com/blog/agent-best-practices)).
-- **Claude Code**: A coding agent that can work from the command line or GitHub Actions. It can read instructions from `CLAUDE.md`, respond to GitHub issues or PRs, use MCP tools, and create code changes for review ([Claude Code Docs](https://code.claude.com/docs/en/github-actions)).
-- **GitHub Copilot coding agent**: A GitHub-integrated agent that can be assigned issues, make changes in branches, run tests and linters in GitHub Actions, and open PRs for human review ([GitHub Docs](https://docs.github.com/copilot/concepts/agents/coding-agent/about-coding-agent)).
+- **Cursor**: An AI code editor. Good for repo-based development, multi-file edits, asking questions about code, and using rules files. Cursor’s agent guidance emphasizes plans, rules, diffs, reviews, and scoped conversations ([Cursor](https://cursor.com/blog/agent-best-practices)). Cursor also documents Automations that can run agents on schedules or event triggers, which is useful for routine codebase chores ([Cursor](https://cursor.com/blog/automations)).
+- **Windsurf**: An AI-native editor whose Cascade agent can create and retrieve workspace memories, which helps with long sessions where context continuity matters ([Windsurf Docs](https://docs.windsurf.com/windsurf/cascade/memories)).
+- **Claude Code**: A coding agent that can work from the command line or GitHub Actions. It can read instructions from `CLAUDE.md`, respond to GitHub issues or PRs, use MCP tools, and create code changes for review ([Claude Code Docs](https://code.claude.com/docs/en/github-actions)). Claude Code also supports Git worktrees so multiple agent sessions can work in parallel without colliding on the same files ([Claude Code Docs](https://code.claude.com/docs/en/worktrees)).
+- **GitHub Copilot coding agent**: A GitHub-integrated agent that can be assigned issues, make changes in branches, run tests and linters in GitHub Actions, and open PRs for human review ([GitHub Docs](https://docs.github.com/copilot/concepts/agents/coding-agent/about-coding-agent)). Copilot also reads custom repository instructions from `.github/copilot-instructions.md` and path-specific files under `.github/instructions/*.instructions.md` ([GitHub Docs](https://docs.github.com/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot)).
 - **Vercel v0**: An AI app builder that is strongest for web apps, UI, Next.js-style projects, prototypes, and production workflows connected to GitHub branches, previews, and PRs ([Vercel](https://vercel.com/blog/introducing-the-new-v0)).
 - **Lovable and Bolt**: AI app builders that can quickly create web apps from prompts. They are most useful when you connect or export to Git before the project becomes important. Lovable documents GitHub sync for backups, branches, PRs, local development, and external deployment, while Bolt documents GitHub repository and branch workflows ([Lovable Docs](https://docs.lovable.dev/integrations/github), [Bolt Support](https://support.bolt.new/integrations/git)).
 - **Replit Agent**: A prompt-to-app builder inside Replit. It is useful for fast iteration and publishing from a workspace, but serious projects still need the same review, testing, and export discipline as any generated app ([Replit Docs](https://docs.replit.com/core-concepts/agent)).
 - **Ollama and LM Studio**: Tools for running AI models locally on your own machine. Ollama exposes a local API, while LM Studio provides a desktop app and local server with OpenAI-compatible endpoints ([Ollama](https://docs.ollama.com/api/introduction), [LM Studio Docs](https://lmstudio.ai/docs/developer/core/server)).
-- **Continue and Cline**: AI coding assistants that can use local or cloud models. Continue supports models, rules, context providers, tools, and MCP servers in agent configurations, while Cline documents local model setups through Ollama or LM Studio ([Continue Docs](https://docs.continue.dev/reference), [Cline Docs](https://docs.cline.bot/running-models-locally/overview)).
+- **Continue and Cline**: AI coding assistants that can use local or cloud models, with strong MCP support. Continue picks up MCP server configs from `.continue/mcpServers/` JSON files and uses MCP tools in agent mode ([Continue Docs](https://docs.continue.dev/customize/deep-dives/mcp)). Cline documents that MCP servers expose tools and resources to the agent, that no MCP servers are pre-installed, and that tool calls require explicit user approval ([Cline Docs](https://docs.cline.bot/mcp/mcp-overview)). Both also document local model usage through Ollama or LM Studio ([Continue Docs](https://docs.continue.dev/customize/models), [Cline Docs](https://docs.cline.bot/running-models-locally/overview)).
+- **OpenRouter and similar gateways**: Model routers that let you call many providers through one API and pick a model by cost, latency, throughput, or fallback. OpenRouter documents an `openrouter/auto` router that picks a model based on the prompt, and provider-routing rules for ordering, fallbacks, and constraints ([OpenRouter Docs](https://openrouter.ai/docs/guides/routing/routers/auto-router), [OpenRouter Docs](https://openrouter.ai/docs/guides/routing/provider-selection)).
 - **MCP**: Model Context Protocol. In plain English, MCP is a way for an AI assistant to use tools. Instead of merely reading code and guessing, an MCP-connected assistant may inspect a game editor, query a database, drive a browser, read errors, manipulate scenes, or call a project-specific tool. MCP is powerful, but it also means the AI can affect real project state, so permissions, undo, and review matter.
+
+### Picking an AI editor or agent
+
+There is no single best choice. The honest version is that each tool is good at slightly different things, and most experienced builders end up using more than one.
+
+| Tool | What it is best at | Where it can frustrate you |
+| --- | --- | --- |
+| Cursor | General AI-native editor, codebase indexing, multi-file edits, scoped rules, plan mode, automations. | Heavy use can get expensive; rule files need maintenance. |
+| Windsurf | Cascade agent with workspace memories that persist across a session and across days. | Memories require care so the agent does not act on stale context. |
+| Claude Code | Terminal and CI-native, repo-wide work, GitHub Actions, MCP, Git worktrees for parallel sessions. | Less of a hand-holding GUI; comfortable with the command line helps. |
+| GitHub Copilot coding agent | Issue-to-branch-to-PR flow inside GitHub, CI-runnable checks, custom repo instructions. | Best when work is well-described as issues with clear acceptance criteria. |
+| Cline / Continue | Local or cloud model flexibility, explicit MCP configuration, transparent tool use. | More setup; smaller local models can struggle with large repos. |
+| Lovable / Bolt / v0 / Replit Agent | Zero-to-one app generation, fast prototypes, share-a-link demos. | Production needs auth, data, payments, tests, CI; plan an exit to a real repo. |
+
+A reasonable starting kit: one repo-aware editor or agent for daily code (Cursor, Claude Code, Windsurf, Cline, or Continue), one CI-side agent for issue-to-PR work (GitHub Copilot coding agent or Claude Code in Actions), and at most one prototype builder (v0, Lovable, Bolt, or Replit Agent) for fast UI generation when needed.
 
 One current warning: do not choose Firebase Studio as a default new-project tool. Google says Firebase Studio was announced for sunset on March 19, 2026, new workspace creation will be disabled on June 22, 2026, and the service will shut down on March 22, 2027, while core Firebase services like Firestore, Authentication, and App Hosting are not affected ([Firebase](https://firebase.google.com/docs/studio/migrating-project)). Firebase services can still be useful, but the Studio product should be treated as something to migrate away from rather than something to start with.
 
@@ -58,7 +95,17 @@ One current warning: do not choose Firebase Studio as a default new-project tool
 
 Before you ask an AI to build the project, write a small document that tells it what project it is inside. This is not busywork. It is how you stop each new chat from re-deciding your stack, broadening scope, or “fixing” unrelated files.
 
-Different tools read different instruction files. Cursor uses project rules such as `.cursor/rules/`. Claude Code commonly uses `CLAUDE.md`. GitHub Copilot can use custom repository instructions. Some tools use `AGENTS.md`, `GEMINI.md`, or a plain project document. The exact filename matters less than the habit: the rules should live in the repo, and every AI session should read them first.
+A useful way to think about this is context engineering: you are deliberately shaping what the model sees before it acts. The clearer the context, the less the model has to guess, the less it has to rebuild from scratch each session, and the less it can wander off into unrelated files. Strong context is short, durable, and specific. It points to other files when the detail belongs there.
+
+Different tools read different instruction files. Cursor uses project rules such as `.cursor/rules/`. Claude Code commonly uses `CLAUDE.md`. GitHub Copilot uses custom repository instructions in `.github/copilot-instructions.md`, and supports path-specific rules under `.github/instructions/*.instructions.md` for guidance scoped to a folder or file type ([GitHub Docs](https://docs.github.com/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot)). Some tools use `AGENTS.md`, `GEMINI.md`, or a plain project document. The exact filename matters less than the habit: the rules should live in the repo, and every AI session should read them first.
+
+A simple layout that works for most projects:
+
+- A top-level rules file (`CLAUDE.md`, `AGENTS.md`, or whatever your main tool reads) with the project contract, what counts as done, and the most important rules.
+- One or more scoped rule files for specific directories or file types (Cursor `.cursor/rules/*.mdc`, Copilot `.github/instructions/*.instructions.md`).
+- Pointers to deeper docs (architecture notes, asset pipeline, deployment runbook) instead of pasting them inline.
+
+Keep the rules short enough that a human will actually read them. If a rule does not survive a month of work without rewriting, it probably belongs in a doc instead of in the rules.
 
 ### Project contract template
 
@@ -123,6 +170,32 @@ Different tools read different instruction files. Cursor uses project rules such
 - Broken:
 - Next:
 ```
+
+### Spell out the forbidden patterns, not only the desired ones
+
+Most rule files describe what good code looks like. The other half is just as important: what the AI is not allowed to do. Forbidden patterns prevent silent rewrites, accidental dependency upgrades, and "while I was here" refactors.
+
+Useful kinds of forbidden patterns:
+
+- File and path rules: do not edit auto-generated folders, do not modify the lock file, do not touch unrelated tests.
+- Library rules: do not add a new dependency without approval, do not switch state libraries, do not introduce a new ORM.
+- Behavioral rules: do not delete user data on migration errors, do not auto-merge, do not skip CI.
+- Style rules: do not rewrite working code that already passes review, do not reformat unrelated files.
+
+Example: a small Unity ruleset
+
+This is a starting point. Adapt it to your team and project.
+
+```text
+For Unity projects:
+- Use the new Input System unless the project contract says otherwise.
+- Avoid GameObject.Find() in gameplay loops; pass references or use serialized fields.
+- Prefer explicit serialized fields with tooltips for designer-facing values.
+- Do not add new plugins or packages without approval.
+- Run the agreed editor and play-mode checks before calling the task complete.
+```
+
+The same shape works for any stack. Pick the patterns that have already burned you, write them down, and link them from the main rules file.
 
 ### Tell the AI what the end result should look or feel like
 
@@ -227,11 +300,50 @@ Good habits:
 - Keep each task small enough that the agent does not need the whole project in its head.
 - Use local models for cheap exploration if cloud usage is a concern.
 
-## Use the agent in phases
+### Pick the right model for the task
 
-The most reliable workflow is chronological. Do not ask the AI to research, design, rewrite, test, and declare victory all in one breath.
+You do not need to use the strongest model for everything. A reasonable rule of thumb:
 
-### Phase one: research
+- **Cheap and fast models**: summarization, brainstorming, naming, draft commit messages, boilerplate, simple bug fixes, doc edits, chatty scaffolding.
+- **Stronger reasoning models**: architecture decisions, multi-file refactors, security reviews, multiplayer or concurrency design, migrations, release reviews, anything where being wrong is expensive.
+- **Local models**: privacy-sensitive work, offline development, cost-sensitive bulk tasks, and exploration when your hardware can keep up.
+
+If you use a router or gateway, you can encode this routing instead of switching models by hand. OpenRouter’s `openrouter/auto` analyzes the prompt and chooses a model, and its provider routing supports ordering, fallbacks, and constraints by latency, throughput, or price ([OpenRouter Docs](https://openrouter.ai/docs/guides/routing/routers/auto-router), [OpenRouter Docs](https://openrouter.ai/docs/guides/routing/provider-selection)). Some IDE-side tools (Continue, Cline, and others) let you configure multiple models per role so a small model handles autocomplete while a larger one handles agent runs.
+
+A practical pattern: default to a fast model for chat and small edits, switch to a reasoning model for plans and reviews, and reach for a local model when the data must stay on your machine.
+
+## The Explore, Plan, Implement, Commit loop
+
+The most reliable workflow is chronological. Do not ask the AI to research, design, rewrite, test, and declare victory all in one breath. A simple loop that scales from a small bug to a large feature:
+
+1. **Explore**: read files, understand constraints, ask questions. No code.
+2. **Plan**: write an implementation spec or plan and get human approval.
+3. **Implement**: make targeted changes with self-checks.
+4. **Commit**: package the changes with a clear commit or PR summary, plus verification.
+
+After Commit, you verify in the real product (Check). If something is wrong, you start the loop again on the smallest next slice. This is also a useful loop for vibe-coded prototypes: it keeps the project honest as soon as the prompt-and-pray phase ends.
+
+A small but important note: when the requirements are unclear, the best move is to interview the builder before writing a plan. A capable agent should ask before assuming. If the tool you are using does not naturally do this, prompt for it explicitly.
+
+### Old prompt vs new prompt
+
+Old:
+
+```text
+Write a C# script for a player controller.
+```
+
+New:
+
+```text
+Review the player architecture doc, implement the PlayerMovement module
+using the agreed interfaces, map input through the project's input actions,
+and verify with the agreed editor and play-mode checks.
+```
+
+The new prompt names the source of truth, points at the right module, references the input system, and ends with a real verification step. That is the difference between a snippet and a contribution.
+
+### Explore
 
 Ask the AI to inspect the project without editing anything.
 
@@ -246,7 +358,7 @@ Tell me:
 - What questions you need answered before changing code.
 ```
 
-### Phase two: plan
+### Plan
 
 Ask for a plan you can edit. Cursor’s Plan Mode is built around this idea: the agent researches, asks questions, creates a plan, and waits for approval before building ([Cursor](https://cursor.com/blog/agent-best-practices)).
 
@@ -264,7 +376,7 @@ Include:
 Do not edit files yet.
 ```
 
-### Phase three: build
+### Implement
 
 Approve one small step. This is where many projects go wrong: the user asks for one thing, and the AI opportunistically rewrites half the project. Prevent that.
 
@@ -275,9 +387,9 @@ Do not change unrelated files.
 After the edit, summarize the diff and tell me how to verify it.
 ```
 
-### Phase four: review
+### Review before commit
 
-Read the diff. Ask the model to explain what changed. If the change is risky, ask a second model or fresh chat to review it.
+Read the diff. Ask the model to explain what changed. If the change is risky, ask a second model or a fresh chat to review it. A useful pattern is writer-reviewer: the agent that wrote the code is rarely the right agent to grade it.
 
 ```text
 Review this change skeptically.
@@ -294,13 +406,13 @@ Look for:
 Do not modify files.
 ```
 
-### Phase five: verify
+### Commit and verify
 
-Verification means checking the real product. It does not mean reading the AI’s summary.
+Commit means packaging the change so a person (or future you) can read it: a clear message, a small diff, a note on how to verify.
 
-For a game, verification might mean playing a full round, checking the frame rate, trying the build on a weaker device, or testing multiple browser tabs. For an app, it might mean submitting the form, refreshing the page, checking the database, testing auth, or opening the deployed URL. For a mobile app, it might mean running on a real device. For a Steam game, it may involve store build requirements and content review.
+Verification means checking the real product. It does not mean reading the AI’s summary. For a game, verification might mean playing a full round, checking the frame rate, trying the build on a weaker device, or testing multiple browser tabs. For an app, it might mean submitting the form, refreshing the page, checking the database, testing auth, or opening the deployed URL. For a mobile app, it might mean running on a real device. For a Steam game, it may involve store build requirements and content review.
 
-### Phase six: handoff
+### Handoff
 
 End every session with:
 
@@ -453,6 +565,34 @@ For apps, it usually means:
 
 If the AI adds particles, physics, realtime multiplayer, maps, image generation, voice, video, or live AI calls, ask for a performance check. The goal is not to become a professional optimization engineer. The goal is to catch obvious problems before they become deep architectural problems.
 
+## Working with more than one agent
+
+Once one agent loop is comfortable, it is tempting to spin up several. Sometimes that pays off. Often it does not. The honest version is that complex multi-agent systems are easy to overdo, and the simplest patterns deliver most of the value.
+
+Start with the writer-reviewer pattern:
+
+- One agent (or session) plans and implements the change.
+- A separate agent in a fresh context reviews the diff against the plan and the project rules.
+- A human approves before merge.
+
+The fresh context is the point. The agent that wrote the code has already convinced itself the change is good. A reviewer that has not seen the trail of small decisions is much more likely to spot scope creep, broken assumptions, or skipped tests.
+
+Useful next patterns, when the writer-reviewer loop is not enough:
+
+- A research agent gathers docs and links.
+- An implementation agent makes the change.
+- A reviewer agent grades it.
+
+For parallel work on the same repo, Git worktrees keep agents from stepping on each other. Claude Code documents worktree support and parallel sessions, including subagents and agent teams isolated by worktree ([Claude Code Docs](https://code.claude.com/docs/en/worktrees)). Worktrees are also useful for humans: one branch for the risky refactor, another for the small bug fix, and you can flip between them without churning the working directory.
+
+A few cautions:
+
+- Resist building an orchestration framework before you need one. A README that names the roles and a couple of prompts will outperform a brittle pipeline for a long time.
+- Treat scheduled or triggered agents as first-class workflow surface, not background magic. Cursor’s Automations, for example, can run agents on schedules or triggers, which is great for chores but still needs a human-readable log of what they did ([Cursor](https://cursor.com/blog/automations)).
+- Keep secrets and destructive permissions out of the secondary agents unless you genuinely need them.
+
+If a multi-agent setup is making the project slower or harder to understand, drop back to one agent and a careful review.
+
 ## Choosing engines and stacks in human terms
 
 The stack choice should feel like a practical decision, not a list of logos. Each option below explains what the path is good at, how AI can help, and where a beginner can get trapped.
@@ -504,11 +644,55 @@ Use Unreal when visual fidelity, cinematic tools, Unreal assets, or UEFN matter.
 
 For UEFN and Fortnite creator projects, remember that you are building inside someone else’s platform. That can be a benefit because distribution and monetization paths exist, but it also means rules and payouts are not under your control.
 
+### MCP for game engines and editors
+
+The most interesting recent shift for engine work is that AI clients can now reach into the editor itself through MCP. Instead of pasting code into a chat and hoping it lines up with the scene, an MCP-connected agent can inspect the actual project and make changes that the editor sees.
+
+In plain terms, MCP has three roles:
+
+- **Host**: the editor or IDE the user is working in.
+- **Client**: the AI tool calling the host, such as Cursor, Claude Code, or Windsurf.
+- **Server**: the MCP server that exposes specific tools to the client (for example, "create scene", "list errors", "edit blueprint").
+
+Most setups also have a small bridge or relay process between the AI client and the editor, because the editor itself is not directly speaking the protocol over the network.
+
+Unity describes its MCP setup as connecting LLM agents like Claude Code and Cursor to the Unity Editor through a relay binary, local IPC, and a Unity Editor MCP bridge that exposes registered tools. Unity also documents an approval flow: AI Gateway connections can be auto-approved, while direct external MCP clients require approval in Unity MCP settings before they can drive the editor ([Unity Docs](https://docs.unity3d.com/Packages/com.unity.ai.assistant@2.0/manual/unity-mcp-overview.html), [Unity Docs](https://docs.unity3d.com/Packages/com.unity.ai.assistant@2.0/manual/unity-mcp-get-started.html)).
+
+For Unreal, the community project `chongdashu/unreal-mcp` ships a C++ Unreal plugin plus a Python FastMCP server, and lets clients such as Cursor, Windsurf, and Claude Desktop manipulate editor actors and Blueprints through MCP tools. The repo lists prerequisites including UE 5.5+, Python 3.12+, and a compatible MCP client ([GitHub](https://github.com/chongdashu/unreal-mcp)). It is a community tool, the surface area is editor-side, and version compatibility moves quickly. Treat it as powerful but fragile: read the current README before depending on it, and prefer reversible changes.
+
+Godot has community MCP plugins for similar use cases, listed earlier alongside the Godot section.
+
+A few rules of thumb for any MCP-driven editor workflow:
+
+- Prefer local MCP servers over public ones for now; the trust model is simpler.
+- Approve external clients explicitly. If the editor has an approval flow, do not bypass it.
+- Start with read-only tools (inspect scene, list errors, dump project structure) before granting write tools.
+- Keep changes small and commit often, so reverts are easy.
+- Verify in the editor, not in chat. The agent can confidently report success on a scene that did not actually change.
+
 ### App builders and repo-first app development
 
 App builders are useful when you need to quickly see an idea. They are especially good for landing pages, dashboards, CRUD apps, internal tools, admin panels, and early SaaS prototypes. They are weaker when the project needs careful architecture, complex permissions, custom realtime behavior, native mobile features, or long-term maintainability.
 
 The rule is simple: the more valuable the app becomes, the more important Git becomes. If you cannot export, branch, review, test, and deploy outside the builder, you are taking on risk. That is why tools with GitHub workflows are preferable for projects you might keep.
+
+### From prompt-to-deploy to a real codebase
+
+There are roughly two modes of "vibe coding," and they are good at different things.
+
+- **Prompt-to-deploy app builders** (Lovable, Bolt, v0, Replit Agent) shine for zero-to-one prototypes, share-a-link demos, and quick MVP validation. You can go from a sentence to a working screen in minutes.
+- **AI-assisted development** (Cursor, Claude Code, Windsurf, Copilot, Cline, Continue) shines for productionizing what the prototype proved: refactors, tests, architecture, security, performance, maintenance.
+
+A common rule of thumb is that initial generation is a small slice of a project’s lifetime; defensibility, scaling, security, debugging, testing, and maintenance are the larger slice. Some people frame this as "20/80," and the split varies by project, but the direction is the part to remember: generation is the start, not the finish.
+
+A reasonable zero-code to low-code pipeline:
+
+1. Generate the first UI or app shell in v0, Bolt, Lovable, or Replit Agent.
+2. Connect to Git early. Lovable, for example, documents a GitHub sync that creates a repository and starts two-way sync, so changes flow both ways ([Lovable Docs](https://docs.lovable.dev/integrations/github)).
+3. Once auth, data, permissions, payments, or tests start to matter, move production work into a repo-based agent or IDE. The builder remains useful for quick UI variants and demos.
+4. Treat the builder as a prototyping surface, not the system of record.
+
+"Prompt-to-deploy" is a fine phrase for the first step. It is misleading as a description of the whole project. Plan for the second step before you depend on it.
 
 ## Control scope without killing the project
 
@@ -1069,6 +1253,81 @@ Check:
 - Store/platform disclosure.
 
 Return a minimal safe design before code.
+```
+
+### Project rules and forbidden patterns
+
+```text
+Help me draft project rules for this repo.
+
+Stack:
+[describe]
+
+Past mistakes I want to prevent:
+- [example]
+- [example]
+
+Produce:
+- A short top-level rules file with what to do, what counts as done, and forbidden patterns.
+- One or more scoped rule files for specific directories or file types if the project warrants it.
+- A list of files/docs the rules should point at instead of inlining.
+
+Keep the rules durable and short. Prefer pointers over duplication.
+```
+
+### MCP setup for an editor or engine
+
+```text
+Help me set up MCP for [Cursor / Windsurf / Claude Code / Cline / Continue]
+working with [Unity / Unreal / Godot / a custom local server].
+
+Plan:
+- Which MCP server to use and where it runs.
+- How the AI client connects (relay, IPC, local socket).
+- Approval flow for tool calls.
+- Which tools to enable first (prefer read-only).
+- How to verify it works on a harmless test action.
+- Rollback if it goes wrong.
+
+Do not enable destructive tools until the read-only path is confirmed.
+```
+
+### GenUI to repo handoff
+
+```text
+I generated this app shell with [v0 / Bolt / Lovable / Replit Agent].
+I now need to move production work into a real repo.
+
+Plan:
+- Connect the project to Git and document the sync model.
+- Identify the parts of the generated code that need refactoring before adding auth, data, payments, or tests.
+- List the first three production concerns to address (auth, data model, deploys, secrets, etc.).
+- Decide what stays in the builder for prototyping and what moves into the repo.
+
+Do not change generated UI behavior in this pass.
+```
+
+### Writer and reviewer pair
+
+```text
+You are the implementer.
+Read the project contract and the plan I approved.
+Implement only the plan. No extra changes.
+Summarize the diff and how to verify it.
+```
+
+```text
+You are the reviewer. You did not write this code.
+Read the project contract, the plan I approved, and the diff.
+
+Check:
+- Does the diff match the plan?
+- Are there unrelated edits?
+- Are tests or manual checks present?
+- Are there security or scope risks?
+- Is the verification plan honest?
+
+Do not modify files. Return a short pass/fail with reasons.
 ```
 
 ### Pre-release review
